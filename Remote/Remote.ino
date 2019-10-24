@@ -76,17 +76,19 @@ void loop() {
   TxBuffer[1] = map( analogRead(A1), 0, 1023, 0, 255);
   TxBuffer[2] = map( analogRead(A2), 0, 1023, 0, 255);
   TxBuffer[3] = 0x00;
-  
+
+  delay(1000);
   /* Start transmit */
   TxTimeExecute = micros(); //time execute measure
   remote.stopListening(); 
   digitalWrite(TX_PIN_LED, HIGH);                      //TX LED ON
   if(TxRole) {                                         //if module is in transmitter mode
     TxState = remote.write(TxBuffer, BUFFER_SIZE);      //transmit TxBuffer content and status transmission save
-  }
+  } 
+  Serial.println("\nTrasmit state: " + String(TxState) + "\n" );
   digitalWrite(TX_PIN_LED, LOW);                       //TX LED OFF
   TxTimeExecute = micros() - TxTimeExecute;
-  Serial.println("\nTx execute time: " + (String(TxTimeExecute)) + "\n" );    //Print time of execute
+  Serial.println("\nTx execute time: " + (String(TxTimeExecute)) + " us\n" );    //Print time of execute
   
 }
 
