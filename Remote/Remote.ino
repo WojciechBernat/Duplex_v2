@@ -22,9 +22,12 @@
 
 /* Variables */
 boolean RxState = false;
-boolean TxState = true;
+boolean TxState = false;
 
-uint32_t TimeExecute = micros(); 
+boolean RxRole = false;
+boolean TxRole = true;
+
+uint32_t TimeExecute = 0;
 uint32_t TxTimeExecute = 0;
 uint32_t RxTimeExecute = 0;
 
@@ -68,17 +71,22 @@ void setup() {
 }
 
 void loop() {
+
+  TxBuffer[0] = map( analogRead(A0), 0, 1023, 0, 255);
+  TxBuffer[1] = map( analogRead(A1), 0, 1023, 0, 255);
+  TxBuffer[2] = map( analogRead(A2), 0, 1023, 0, 255);
+  TxBuffer[3] = 0x00;
+  
   /* Start transmit */
   TxTimeExecute = micros(); //time execute measure
-  
   remote.stopListening(); 
-  digitalWrite(TX_PIN_LED, HIGH); 
-  if(1) {
-    
+  digitalWrite(TX_PIN_LED, HIGH);                      //TX LED ON
+  if(TxRole) {                                         //if module is in transmitter mode
+    TxState = remote.write(TxBuffer, BUFFER_SIZE);      //transmit TxBuffer content and status transmission save
   }
-  
-  TxTimeExecute = TimeExecute - TxTimeExecute;
-  Serial.println("\nTx execute time: " + (String(TimeExecute)) + "\n" );
+  digitalWrite(TX_PIN_LED, LOW);                       //TX LED OFF
+  TxTimeExecute = micros() - TxTimeExecute;
+  Serial.println("\nTx execute time: " + (String(TxTimeExecute)) + "\n" );    //Print time of execute
   
 }
 
