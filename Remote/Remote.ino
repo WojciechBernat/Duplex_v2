@@ -24,6 +24,10 @@
 boolean RxState = false;
 boolean TxState = true;
 
+uint32_t TimeExecute = micros(); 
+uint32_t TxTimeExecute = 0;
+uint32_t RxTimeExecute = 0;
+
 /* Arrays */
 uint8_t TxBuffer[BUFFER_SIZE];
 uint8_t RxBuffer[BUFFER_SIZE];
@@ -46,7 +50,7 @@ void setup() {
   /* GPIO init */ 
   pinMode(TX_PIN_LED, OUTPUT);
   pinMode(RX_PIN_LED, OUTPUT); 
-  Serial.println("\LEDs init OK\nTX LED pin: 6 \nRX LED pin: 5 \n");
+  Serial.println("\nLEDs init OK \nTX LED pin: 6 \nRX LED pin: 5 \n");
   delay(10);
   
   /* nRF24L01+ init */
@@ -64,9 +68,18 @@ void setup() {
 }
 
 void loop() {
+  /* Start transmit */
+  TxTimeExecute = micros(); //time execute measure
+  
   remote.stopListening(); 
   digitalWrite(TX_PIN_LED, HIGH); 
-
+  if(1) {
+    
+  }
+  
+  TxTimeExecute = TimeExecute - TxTimeExecute;
+  Serial.println("\nTx execute time: " + (String(TimeExecute)) + "\n" );
+  
 }
 
 
