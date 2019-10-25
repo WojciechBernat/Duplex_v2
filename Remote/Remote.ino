@@ -30,7 +30,7 @@ boolean TxRole = true;
 uint32_t TimeExecute = 0;
 uint32_t TxTimeExecute = 0;
 uint32_t RxTimeExecute = 0;
-
+uint16_t blinkTime = 200;
 /* Arrays */
 uint8_t TxBuffer[BUFFER_SIZE];
 uint8_t RxBuffer[BUFFER_SIZE];
@@ -53,6 +53,7 @@ void setup() {
   /* GPIO init */ 
   pinMode(TX_PIN_LED, OUTPUT);
   pinMode(RX_PIN_LED, OUTPUT); 
+  doubleBlink(TX_PIN_LED, RX_PIN_LED, blinkTime);
   Serial.println("\nLEDs init OK \nTX LED pin: 6 \nRX LED pin: 5 \n");
   delay(10);
   
@@ -60,6 +61,8 @@ void setup() {
   remote.begin();
   remote.openWritingPipe(TxAddresses);
   remote.openReadingPipe(1, RxAddresses);
+  remote.setPALevel(RF24_PA_MIN);
+  remote.stopListening();
   Serial.println("\nNRF24 init OK\n Set TX and RX pipeline addresses\n");
   delay(10);
   
@@ -79,16 +82,17 @@ void loop() {
 
   delay(1000);
   /* Start transmit */
-  TxTimeExecute = micros(); //time execute measure
+  //TxTimeExecute = micros(); //time execute measure
   remote.stopListening(); 
   digitalWrite(TX_PIN_LED, HIGH);                      //TX LED ON
   if(TxRole) {                                         //if module is in transmitter mode
-    TxState = remote.write(TxBuffer, BUFFER_SIZE);      //transmit TxBuffer content and status transmission save
+    //wyjety write
   } 
+  TxState = remote.write(TxBuffer, BUFFER_SIZE);      //transmit TxBuffer content and status transmission save
   Serial.println("\nTrasmit state: " + String(TxState) + "\n" );
   digitalWrite(TX_PIN_LED, LOW);                       //TX LED OFF
-  TxTimeExecute = micros() - TxTimeExecute;
-  Serial.println("\nTx execute time: " + (String(TxTimeExecute)) + " us\n" );    //Print time of execute
+ // TxTimeExecute = micros() - TxTimeExecute;
+ // Serial.println("\nTx execute time: " + (String(TxTimeExecute)) + " us\n" );    //Print time of execute
   
 }
 
