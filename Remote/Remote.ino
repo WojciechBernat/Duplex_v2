@@ -96,15 +96,22 @@ void loop() {
     TxState = remote.write(TxBuffer, BUFFER_SIZE);      //transmit TxBuffer content and status transmission save
     digitalWrite(TX_PIN_LED, LOW);                       //TX LED OFF
     TxCounter++;
+
   } 
-  Serial.println("\nTrasmit state: " + String(TxState) + "\n" );
-  TxTimeExecute = micros() - TxTimeExecute;
-  Serial.println("\nTx execute time: " + (String(TxTimeExecute)) + " us\n" );    //Print time of execute
   if(TxCounter == ChangeRole) {
+    RxRole = true;
     Serial.println("\nChange role from TX to RX\nTxCounter: " + String(TxCounter));
     TxCounter = 0;
   }
-  gbzb
+  /* End of transmit */
+  
+  /* Start receive */
+  if(RxRole) {
+    //RX code
+  }
+  /* End of receive */
+
+
 }
 
 
