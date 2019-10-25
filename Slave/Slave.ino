@@ -25,15 +25,19 @@ boolean TxState = false;
 
 boolean RxRole = true;
 boolean TxRole = false;
+boolean ModuleRole = true; 
 
-uint8_t TxCounter = 0x00;
 uint8_t RxCounter = 0x00;
+uint8_t TxCounter = 0x01;
 uint8_t ChangeRole = 0x0F;
 
 //uint32_t TimeExecute = 0; niepotrzebne
-uint32_t TxTimeExecute = 0;
 uint32_t RxTimeExecute = 0;
+uint32_t TxTimeExecute = 0;
 uint16_t blinkTime = 500;
+
+String RxBufferName = "RX Buffer";
+String TxBufferName = "TX Buffer";
 
 /* Arrays */
 uint8_t TxBuffer[BUFFER_SIZE];
@@ -45,6 +49,8 @@ uint8_t RxAddresses[PIPE_ADDRESS_SIZE] =  {0x0A, 0x0A, 0x0A, 0x0A, 0x01};   //RX
 /* Prototypes */
 boolean doubleBlink(uint8_t ledPin_1, uint8_t ledPin_2, uint16_t blinkTime);
 void bufferReset(uint8_t *buf, uint8_t bufSize);
+void bufferPrint(uint8_t *buf, uint8_t bufSize);
+void bufferPrint(uint8_t *buf, uint8_t bufSize, String bufferName);
 
 RF24 receiver(7, 8);
 
@@ -84,7 +90,7 @@ void loop() {
 
   if (RxRole) {                                    //if module is Receiver
     digitalWrite(RX_PIN_LED, HIGH);
-    if(receiver.available()) {                   //receiving data while they are in nRF24 FIFO's buffer
+    if (receiver.available()) {                  //receiving data while they are in nRF24 FIFO's buffer
       receiver.read(RxBuffer, BUFFER_SIZE);      //read data
       RxState = true;                            //if read Status = OK
     }
@@ -93,19 +99,32 @@ void loop() {
     }
     digitalWrite(RX_PIN_LED, LOW);
     Serial.println("\nReceive state: " + String(RxState) + "\n" );
+    bufferPrint(RxBuffer, BUFFER_SIZE, RxBufferName);                 //Print received bytes
     RxCounter++;
   }
   RxTimeExecute = micros() - RxTimeExecute;
   Serial.println("\nRx execute time: " + (String(RxTimeExecute)) + " us\n" );    //Print time of execute
   /* End of receive */
 
-  if(RxCounter == ChangeRole) {
-     Serial.println("Change roles from RX to TX\nRxCounter: " + String(RxCounter));
-     RxCounter = 0;
+  /* Change role */
+  if (RxCounter == ChangeRole) {
+    Serial.println("Change role from RX to TX\nRxCounter: " + String(RxCounter));
+    RxCounter = 0;
   }
 
-  if(TxRole) {
-    //
+  /* Start tranmit */
+  if (TxRole) {
+    receiver.stopListening();
+    TxBuffer[0] = 0x4A; TxBuffer[1] = 0x55; TxBuffer[2] = 0x4C; TxBuffer[3] = 0x49; TxBuffer[4] = 0x41;
+    digitalWrite(TX_PIN_LED, HIGH);
+    TxState = receiver.write(TxBuffer, BUFFER_SIZE);
+    digitalWrite(TX_PIN_LED, LOW);
+    TxCounter++;
+  }
+  /* Change role */
+  if (TxCounter == ChangeRole) {
+    Serial.println("\nChange role from RX to RX\nTxCounter: " + String(TxCounter));
+    TxCounter = 0;
   }
 
 
@@ -155,4 +174,15 @@ void bufferReset(uint8_t *buf, uint8_t bufSize) {            //Funkcja resetowan
   for (uint8_t i = 0; i < bufSize; i++) {
     buf[i] = 0;
   }
+}
+
+void bufferPrint(uint8_t *buf, uint8_t bufSize) {
+  for (int i = 0; i < bufSize; i++ ) {
+    Serial.print("\t " + (String(buf[i])) + " " );
+  }
+}
+
+void bufferPrint(uint8_t *buf, uint8_t bufSize, String bufferName) {
+  Serial.print("\nContent of" + bufferName + ": ");
+  bufferPrint(buf, bufSize);
 }
