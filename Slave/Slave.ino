@@ -16,15 +16,15 @@
 #define UART_SPEED_288   28800
 #define UART_SPEED_115   115200
 
-#define TX_PIN_LED 6            //Pins numbers
-#define RX_PIN_LED 5
+#define TX_PIN_LED 5            //Pins numbers
+#define RX_PIN_LED 6
 
 /* Variables */
 boolean RxState = false;
 boolean TxState = false;
 
-boolean RxRole = false;
-boolean TxRole = true
+boolean RxRole = true;
+boolean TxRole = false;
 
 uint32_t TimeExecute = 0;
 uint32_t TxTimeExecute = 0;
@@ -34,8 +34,8 @@ uint32_t RxTimeExecute = 0;
 uint8_t TxBuffer[BUFFER_SIZE];
 uint8_t RxBuffer[BUFFER_SIZE];
 
-uint8_t TxAddresses[PIPE_ADDRESS_SIZE] = {0x0A, 0x0A, 0x0A, 0x0A, 0x01};  //TX pipeline address
-uint8_t RxAddresses[PIPE_ADDRESS_SIZE] = {0x0B, 0x0B, 0x0B, 0x0B, 0x02};  //RX pipeline address
+uint8_t TxAddresses[PIPE_ADDRESS_SIZE] = {0x0A, 0x0A, 0x0A, 0x0A, 0x02};  //TX pipeline address
+uint8_t RxAddresses[PIPE_ADDRESS_SIZE] = {0x0B, 0x0B, 0x0B, 0x0B, 0x01};  //RX pipeline address
 
 /* Prototypes */
 boolean doubleBlink(uint8_t ledPin_1, uint8_t ledPin_2, uint16_t blinkTime);
@@ -52,7 +52,7 @@ void setup() {
   /* GPIO init */
   pinMode(TX_PIN_LED, OUTPUT);
   pinMode(RX_PIN_LED, OUTPUT);
-  Serial.println("\LEDs init OK\nTX LED pin: 6 \nRX LED pin: 5 \n");
+  Serial.println("\nLEDs init OK\nTX LED pin: 6 \nRX LED pin: 5 \n");
   delay(10);
 
   /* nRF24L01+ init */
@@ -73,18 +73,26 @@ void setup() {
 void loop() {
   /* Start receive */
   RxTimeExecute = micros();      //time execute measure
-  if(receiver.available()) {
-     while(receiver.available()) {
-      receiver.read();
+  receiver.startListening();
+  digitalWrite(RX_PIN_LED, HIGH);
+  
+  if(RxRole) {                                    //if module is Receiver
+     if(receiver.available()) {                //receiving data while they are in nRF24 FIFO's buffer
+        while(receiver.available()) {
+         receiver.read(RxBuffer, BUFFER_SIZE);     //read data
+        }
+        RxState = true;
+     }
+     else {
+      RxState = false;
      }
     
   }
-
-
-
-  
+  Serial.println("\nReceive state: " + String(RxState) + "\n" );
+  digitalWrite(RX_PIN_LED, LOW);
   RxTimeExecute = micros() - RxTimeExecute;
   Serial.println("\nRx execute time: " + (String(RxTimeExecute)) + " us\n" );    //Print time of execute
+  RxState = false;
 
 }
 
