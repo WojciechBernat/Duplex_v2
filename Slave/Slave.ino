@@ -33,7 +33,7 @@ uint8_t ChangeRole = 0x0F;
 //uint32_t TimeExecute = 0; niepotrzebne
 uint32_t TxTimeExecute = 0;
 uint32_t RxTimeExecute = 0;
-uint16_t blinkTime = 200;
+uint16_t blinkTime = 500;
 
 /* Arrays */
 uint8_t TxBuffer[BUFFER_SIZE];
@@ -82,23 +82,32 @@ void loop() {
   RxTimeExecute = micros();                      //time execute measure
   receiver.startListening();
 
-  if (true) {                                   //if module is Receiver
+  if (RxRole) {                                    //if module is Receiver
     digitalWrite(RX_PIN_LED, HIGH);
     if(receiver.available()) {                   //receiving data while they are in nRF24 FIFO's buffer
-      receiver.read(RxBuffer, BUFFER_SIZE);     //read data
-      RxState = true;
+      receiver.read(RxBuffer, BUFFER_SIZE);      //read data
+      RxState = true;                            //if read Status = OK
     }
     else {
-      //RxState = false;
+      RxState = false;                           //if not read Status = not OK
     }
     digitalWrite(RX_PIN_LED, LOW);
     Serial.println("\nReceive state: " + String(RxState) + "\n" );
+    RxCounter++;
   }
-  /* End of receive */
-
-
   RxTimeExecute = micros() - RxTimeExecute;
   Serial.println("\nRx execute time: " + (String(RxTimeExecute)) + " us\n" );    //Print time of execute
+  /* End of receive */
+
+  if(RxCounter == ChangeRole) {
+     Serial.println("Change roles from RX to TX\nRxCounter: " + String(RxCounter));
+     RxCounter = 0;
+  }
+
+  if(TxRole) {
+    //
+  }
+
 
 }
 
