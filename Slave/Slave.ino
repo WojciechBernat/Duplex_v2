@@ -29,7 +29,7 @@ boolean TxRole = false;
 uint32_t TimeExecute = 0;
 uint32_t TxTimeExecute = 0;
 uint32_t RxTimeExecute = 0;
-
+uint16_t blinkTime = 200;
 /* Arrays */
 uint8_t TxBuffer[BUFFER_SIZE];
 uint8_t RxBuffer[BUFFER_SIZE];
@@ -52,6 +52,7 @@ void setup() {
   /* GPIO init */
   pinMode(TX_PIN_LED, OUTPUT);
   pinMode(RX_PIN_LED, OUTPUT);
+  doubleBlink(TX_PIN_LED, RX_PIN_LED, blinkTime);
   Serial.println("\nLEDs init OK\nTX LED pin: 6 \nRX LED pin: 5 \n");
   delay(10);
 
@@ -59,6 +60,7 @@ void setup() {
   receiver.begin();
   receiver.openWritingPipe(TxAddresses);
   receiver.openReadingPipe(1, RxAddresses);
+  receiver.setPALevel(RF24_PA_MIN);
   Serial.println("\nNRF24 init OK\n Set TX and RX pipeline addresses\n");
   delay(10);
 
@@ -72,27 +74,35 @@ void setup() {
 
 void loop() {
   /* Start receive */
-  RxTimeExecute = micros();      //time execute measure
+//  RxTimeExecute = micros();      //time execute measure
   receiver.startListening();
   digitalWrite(RX_PIN_LED, HIGH);
-  
-  if(RxRole) {                                    //if module is Receiver
-     if(receiver.available()) {                //receiving data while they are in nRF24 FIFO's buffer
-        while(receiver.available()) {
+
+ if(receiver.available()) {
          receiver.read(RxBuffer, BUFFER_SIZE);     //read data
-        }
-        RxState = true;
-     }
-     else {
+         RxState = true;
+    }
+    else {
       RxState = false;
-     }
+      }
     
-  }
+  
+//  if(RxRole) {                                    //if module is Receiver
+//     if(receiver.available()) {                //receiving data while they are in nRF24 FIFO's buffer
+//        while(receiver.available()) {
+//         receiver.read(RxBuffer, BUFFER_SIZE);     //read data
+//        }
+//        RxState = true;
+//     }
+//     else {
+//      RxState = false;
+//     }
+//  }
   Serial.println("\nReceive state: " + String(RxState) + "\n" );
   digitalWrite(RX_PIN_LED, LOW);
-  RxTimeExecute = micros() - RxTimeExecute;
-  Serial.println("\nRx execute time: " + (String(RxTimeExecute)) + " us\n" );    //Print time of execute
-  RxState = false;
+//  RxTimeExecute = micros() - RxTimeExecute;
+//  Serial.println("\nRx execute time: " + (String(RxTimeExecute)) + " us\n" );    //Print time of execute
+//  RxState = false;
 
 }
 
