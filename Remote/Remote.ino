@@ -27,10 +27,17 @@ boolean TxState = false;
 boolean RxRole = false;
 boolean TxRole = true;
 
-uint32_t TimeExecute = 0;
+uint8_t TxCounter = 0x00;
+uint8_t RxCounter = 0x00;
+uint8_t ChangeRole = 0x0F;
+
+//uint32_t TimeExecute = 0;   niepotrzebne
 uint32_t TxTimeExecute = 0;
 uint32_t RxTimeExecute = 0;
+
 uint16_t blinkTime = 200;
+
+
 /* Arrays */
 uint8_t TxBuffer[BUFFER_SIZE];
 uint8_t RxBuffer[BUFFER_SIZE];
@@ -80,19 +87,23 @@ void loop() {
   TxBuffer[2] = map( analogRead(A2), 0, 1023, 0, 255);
   TxBuffer[3] = 0x00;
 
-  delay(10);
+  delay(100);
   /* Start transmit */
-  //TxTimeExecute = micros(); //time execute measure
+  TxTimeExecute = micros(); //time execute measure
   remote.stopListening(); 
-  digitalWrite(TX_PIN_LED, HIGH);                      //TX LED ON
   if(TxRole) {                                         //if module is in transmitter mode
-    //wyjety write
+    digitalWrite(TX_PIN_LED, HIGH);                      //TX LED ON
+    TxState = remote.write(TxBuffer, BUFFER_SIZE);      //transmit TxBuffer content and status transmission save
+    digitalWrite(TX_PIN_LED, LOW);                       //TX LED OFF
+    TxCounter++;
   } 
-  TxState = remote.write(TxBuffer, BUFFER_SIZE);      //transmit TxBuffer content and status transmission save
   Serial.println("\nTrasmit state: " + String(TxState) + "\n" );
-  digitalWrite(TX_PIN_LED, LOW);                       //TX LED OFF
- // TxTimeExecute = micros() - TxTimeExecute;
- // Serial.println("\nTx execute time: " + (String(TxTimeExecute)) + " us\n" );    //Print time of execute
+  TxTimeExecute = micros() - TxTimeExecute;
+  Serial.println("\nTx execute time: " + (String(TxTimeExecute)) + " us\n" );    //Print time of execute
+  if(TxCounter == ChangeRole) {
+    Serial.println("\nChange role from TX to RX\nTxCounter: " + String(TxCounter));
+    TxCounter = 0;
+  }
   
 }
 
