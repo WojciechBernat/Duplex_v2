@@ -8,7 +8,7 @@
 
 /* Directives and Macros */
 #define PIPE_ADDRESS_SIZE  5    //Only 5 byte!
-#define BUFFER_SIZE        4   //Size of TX and RX buffers
+#define BUFFER_SIZE       32   //Size of TX and RX buffers
 
 
 #define UART_SPEED_48    4800   //UART speeds
@@ -26,16 +26,21 @@ boolean TxState = false;
 boolean RxRole = true;
 boolean TxRole = false;
 
-uint32_t TimeExecute = 0;
+uint8_t TxCounter = 0x00;
+uint8_t RxCounter = 0x00;
+uint8_t ChangeRole = 0x0F;
+
+//uint32_t TimeExecute = 0; niepotrzebne
 uint32_t TxTimeExecute = 0;
 uint32_t RxTimeExecute = 0;
-uint16_t blinkTime = 200;
+uint16_t blinkTime = 500;
+
 /* Arrays */
 uint8_t TxBuffer[BUFFER_SIZE];
 uint8_t RxBuffer[BUFFER_SIZE];
 
-uint8_t TxAddresses[PIPE_ADDRESS_SIZE] = {0x0B, 0x0B, 0x0B, 0x0B, 0x02};  //TX pipeline address
-uint8_t RxAddresses[PIPE_ADDRESS_SIZE] = {0x0A, 0x0A, 0x0A, 0x0A, 0x01};  //RX pipeline address
+uint8_t TxAddresses[PIPE_ADDRESS_SIZE] = {0x0A, 0x0A, 0x0A, 0x0A, 0x02};  //TX pipeline address
+uint8_t RxAddresses[PIPE_ADDRESS_SIZE] = {0x0B, 0x0B, 0x0B, 0x0B, 0x01};  //RX pipeline address
 
 /* Prototypes */
 boolean doubleBlink(uint8_t ledPin_1, uint8_t ledPin_2, uint16_t blinkTime);
@@ -74,35 +79,35 @@ void setup() {
 
 void loop() {
   /* Start receive */
-//  RxTimeExecute = micros();      //time execute measure
+  RxTimeExecute = micros();                      //time execute measure
   receiver.startListening();
-  digitalWrite(RX_PIN_LED, HIGH);
 
- if(receiver.available()) {
-         receiver.read(RxBuffer, BUFFER_SIZE);     //read data
-         RxState = true;
+  if (RxRole) {                                    //if module is Receiver
+    digitalWrite(RX_PIN_LED, HIGH);
+    if(receiver.available()) {                   //receiving data while they are in nRF24 FIFO's buffer
+      receiver.read(RxBuffer, BUFFER_SIZE);      //read data
+      RxState = true;                            //if read Status = OK
     }
     else {
-      RxState = false;
-      }
-    
-  
-//  if(RxRole) {                                    //if module is Receiver
-//     if(receiver.available()) {                //receiving data while they are in nRF24 FIFO's buffer
-//        while(receiver.available()) {
-//         receiver.read(RxBuffer, BUFFER_SIZE);     //read data
-//        }
-//        RxState = true;
-//     }
-//     else {
-//      RxState = false;
-//     }
-//  }
-  Serial.println("\nReceive state: " + String(RxState) + "\n" );
-  digitalWrite(RX_PIN_LED, LOW);
-//  RxTimeExecute = micros() - RxTimeExecute;
-//  Serial.println("\nRx execute time: " + (String(RxTimeExecute)) + " us\n" );    //Print time of execute
-//  RxState = false;
+      RxState = false;                           //if not read Status = not OK
+    }
+    digitalWrite(RX_PIN_LED, LOW);
+    Serial.println("\nReceive state: " + String(RxState) + "\n" );
+    RxCounter++;
+  }
+  RxTimeExecute = micros() - RxTimeExecute;
+  Serial.println("\nRx execute time: " + (String(RxTimeExecute)) + " us\n" );    //Print time of execute
+  /* End of receive */
+
+  if(RxCounter == ChangeRole) {
+     Serial.println("Change roles from RX to TX\nRxCounter: " + String(RxCounter));
+     RxCounter = 0;
+  }
+
+  if(TxRole) {
+    //
+  }
+
 
 }
 
