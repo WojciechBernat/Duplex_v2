@@ -80,7 +80,7 @@ void loop() {
   TxBuffer[2] = map( analogRead(A2), 0, 1023, 0, 255);
   TxBuffer[3] = 0x00;
 
-  delay(1000);
+  delay(10);
   /* Start transmit */
   //TxTimeExecute = micros(); //time execute measure
   remote.stopListening(); 
