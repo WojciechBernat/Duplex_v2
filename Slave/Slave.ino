@@ -28,8 +28,10 @@ boolean TxRole = false;
 boolean ModuleRole = true; 
 
 uint8_t RxCounter = 0x00;
-uint8_t TxCounter = 0x01;
-uint8_t ChangeRole = 0x0F;
+uint8_t TxCounter = 0x00;
+uint8_t ToRxCounter = 0x02;
+uint8_t ToTxCounter = 0x0F;
+
 
 //uint32_t TimeExecute = 0; niepotrzebne
 uint32_t RxTimeExecute = 0;
@@ -84,8 +86,9 @@ void setup() {
 }
 
 void loop() {
+  delay(1000);
   /* Start receive */
-  RxTimeExecute = micros();                      //time execute measure
+//  RxTimeExecute = micros();                      //time execute measure
   receiver.startListening();
 
   if (RxRole) {                                    //if module is Receiver
@@ -101,15 +104,19 @@ void loop() {
     Serial.println("\nReceive state: " + String(RxState) + "\n" );
     bufferPrint(RxBuffer, BUFFER_SIZE, RxBufferName);                 //Print received bytes
     RxCounter++;
+    Serial.println("\nRx Counter " + String(RxCounter) + "\n");
   }
-  RxTimeExecute = micros() - RxTimeExecute;
-  Serial.println("\nRx execute time: " + (String(RxTimeExecute)) + " us\n" );    //Print time of execute
+//  RxTimeExecute = micros() - RxTimeExecute;
+//  Serial.println("\nRx execute time: " + (String(RxTimeExecute)) + " us\n" );    //Print time of execute
   /* End of receive */
 
   /* Change role */
-  if (RxCounter == ChangeRole) {
+  if (RxCounter == ToTxCounter) {
     Serial.println("Change role from RX to TX\nRxCounter: " + String(RxCounter));
+    RxRole = false;
+    TxRole = true;
     RxCounter = 0;
+    //tutaj linia do zmiany roli
   }
 
   /* Start tranmit */
@@ -118,12 +125,15 @@ void loop() {
     TxBuffer[0] = 0x4A; TxBuffer[1] = 0x55; TxBuffer[2] = 0x4C; TxBuffer[3] = 0x49; TxBuffer[4] = 0x41;
     digitalWrite(TX_PIN_LED, HIGH);
     TxState = receiver.write(TxBuffer, BUFFER_SIZE);
+    Serial.println("\nTransmit state " + String(TxState) + "\n");
     digitalWrite(TX_PIN_LED, LOW);
     TxCounter++;
   }
   /* Change role */
-  if (TxCounter == ChangeRole) {
-    Serial.println("\nChange role from RX to RX\nTxCounter: " + String(TxCounter));
+  if (TxCounter == ToRxCounter) {
+    Serial.println("\nChange role from TX to RX\nTxCounter: " + String(TxCounter));
+    RxRole = true;
+    TxRole = false;
     TxCounter = 0;
   }
 
@@ -183,6 +193,6 @@ void bufferPrint(uint8_t *buf, uint8_t bufSize) {
 }
 
 void bufferPrint(uint8_t *buf, uint8_t bufSize, String bufferName) {
-  Serial.print("\nContent of" + bufferName + ": ");
+  Serial.print("\nContent of " + bufferName + ": ");
   bufferPrint(buf, bufSize);
 }
