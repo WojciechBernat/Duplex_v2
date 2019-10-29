@@ -9,7 +9,7 @@
 
 /* Directives and Macros */
 #define PIPE_ADDRESS_SIZE  5    //Only 5 byte!
-#define BUFFER_SIZE        4   //Size of TX and RX buffers
+#define BUFFER_SIZE        8   //Size of TX and RX buffers
 
 
 #define UART_SPEED_48    4800   //UART speeds
@@ -29,7 +29,8 @@ boolean TxRole = true;
 
 uint8_t TxCounter = 0x00;
 uint8_t RxCounter = 0x00;
-uint8_t ChangeRole = 0x0F;
+uint8_t ToTxCounter = 0x0A;
+uint8_t ToRxCounter = 0x0F;
 
 //uint32_t TimeExecute = 0;   niepotrzebne
 uint32_t TxTimeExecute = 0;
@@ -49,21 +50,21 @@ uint8_t RxAddresses[PIPE_ADDRESS_SIZE] = {0x0B, 0x0B, 0x0B, 0x0B, 0x02};  //RX p
 boolean doubleBlink(uint8_t ledPin_1, uint8_t ledPin_2, uint16_t blinkTime);
 void bufferReset(uint8_t *buf, uint8_t bufSize);
 
-RF24 remote(7,8);
+RF24 remote(7, 8);
 
 void setup() {
   /* UART init */
   Serial.begin(UART_SPEED_96, SERIAL_8E1);                        //UART 8 bits with EVEN mode - że bit parzystości
   Serial.println("\nRemote application start\nUART init OK\n");
   delay(10);
-  
-  /* GPIO init */ 
+
+  /* GPIO init */
   pinMode(TX_PIN_LED, OUTPUT);
-  pinMode(RX_PIN_LED, OUTPUT); 
+  pinMode(RX_PIN_LED, OUTPUT);
   doubleBlink(TX_PIN_LED, RX_PIN_LED, blinkTime);
   Serial.println("\nLEDs init OK \nTX LED pin: 6 \nRX LED pin: 5 \n");
   delay(10);
-  
+
   /* nRF24L01+ init */
   remote.begin();
   remote.openWritingPipe(TxAddresses);
@@ -72,7 +73,7 @@ void setup() {
   remote.stopListening();
   Serial.println("\nNRF24 init OK\n Set TX and RX pipeline addresses\n");
   delay(10);
-  
+
   /* Clean buffers */
   bufferReset(TxBuffer, sizeof(TxBuffer));
   bufferReset(RxBuffer, sizeof(RxBuffer));
@@ -89,27 +90,42 @@ void loop() {
 
   delay(100);
   /* Start transmit */
-  TxTimeExecute = micros(); //time execute measure
-  remote.stopListening(); 
-  if(TxRole) {                                         //if module is in transmitter mode
+  //  TxTimeExecute = micros(); //time execute measure
+  remote.stopListening();
+  if (TxRole) {                                        //if module is in transmitter mode
     digitalWrite(TX_PIN_LED, HIGH);                      //TX LED ON
     TxState = remote.write(TxBuffer, BUFFER_SIZE);      //transmit TxBuffer content and status transmission save
     digitalWrite(TX_PIN_LED, LOW);                       //TX LED OFF
     TxCounter++;
-
-  } 
-  if(TxCounter == ChangeRole) {
+    Serial.println("\n TxState " + String(TxState) + "\n");
+  }
+  if (TxCounter == ToRxCounter) {
     RxRole = true;
+    TxRole = false;
     Serial.println("\nChange role from TX to RX\nTxCounter: " + String(TxCounter));
     TxCounter = 0;
   }
   /* End of transmit */
-  
+
   /* Start receive */
-  if(RxRole) {
-    //RX code
+  if (RxRole) {
+    digitalWrite(RX_PIN_LED, HIGH);
+    if (remote.available()) {
+      remote.read(RxBuffer, BUFFER_SIZE);
+      Serial.print("RX Buffer print " + String(RxBuffer[0]));
+
+    }
+    RxCounter++;
+    Serial.println("\n RxCounter " + String(RxCounter) + "\n");
+    digitalWrite(RX_PIN_LED, LOW);
   }
   /* End of receive */
+  if (RxCounter == ToTxCounter) {
+    RxRole = false;
+    TxRole = true;
+    Serial.println("Change role from RX to TX\nRxCounter: " + String(RxCounter));
+    RxCounter = 0;
+  }
 
 
 }
